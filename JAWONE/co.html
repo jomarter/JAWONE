@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JAWONE - Interactive Contact</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a1a1a, #2a2a2a);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            color: white;
+            overflow-x: hidden;
+            perspective: 1000px;
+        }
+
+        /* 3D Scene Container */
+        .scene {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            transform-style: preserve-3d;
+            position: fixed;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .floating-cube {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            transform-style: preserve-3d;
+            animation: floatAndRotate 10s infinite linear;
+        }
+
+        .cube-face {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .front { transform: translateZ(25px); }
+        .back { transform: translateZ(-25px) rotateY(180deg); }
+        .right { transform: translateX(25px) rotateY(90deg); }
+        .left { transform: translateX(-25px) rotateY(-90deg); }
+        .top { transform: translateY(-25px) rotateX(90deg); }
+        .bottom { transform: translateY(25px) rotateX(-90deg); }
+
+        /* Particle Effects */
+        .particle {
+            position: absolute;
+            width: 5px;
+            height: 5px;
+            background: white;
+            border-radius: 50%;
+            pointer-events: none;
+            opacity: 0.5;
+        }
+
+        /* Main Content Container */
+        .content {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .title-container {
+            perspective: 1000px;
+            margin-bottom: 4rem;
+            text-align: center;
+            position: relative;
+        }
+
+        .title {
+            font-size: 5rem;
+            font-weight: bold;
+            transform-style: preserve-3d;
+            animation: titleFloat 4s ease-in-out infinite;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+            position: relative;
+        }
+
+        .title::after {
+            content: 'JAWONE';
+            position: absolute;
+            top: 0;
+            left: 0;
+            opacity: 0.1;
+            transform: translateZ(-20px);
+        }
+
+        .subtitle {
+            font-size: 2.5rem;
+            margin-top: 1rem;
+            opacity: 0.8;
+            animation: subtitlePulse 2s ease-in-out infinite;
+            background: linear-gradient(45deg, #fff, #aaa);
+            -webkit-background-clip876: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Enhanced Social Grid */
+        .social-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            max-width: 1000px;
+            width: 100%;
+            margin: 0 auto 3rem;
+            perspective: 1000px;
+        }
+
+        .social-link {
+            position: relative;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2.5rem;
+            border-radius: 1rem;
+            text-decoration: none;
+            color: white;
+            text-align: center;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+            overflow: hidden;
+        }
+
+        .social-link::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.6s;
+        }
+
+        .social-link:hover::before {
+            transform: translateX(100%);
+        }
+
+        .social-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            display: block;
+            transform: translateZ(30px);
+            text-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .social-text {
+            transform: translateZ(20px);
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        /* Platform-specific styling */
+        .tiktok { background: linear-gradient(45deg, #000000, #111111); }
+        .whatsapp { background: linear-gradient(45deg, #25D366, #128C7E); }
+        .instagram { 
+            background: linear-gradient(45deg, #405DE6, #5851DB, #833AB4, #C13584, #E1306C, #FD1D1D);
+        }
+        .facebook { background: linear-gradient(45deg, #1877f2, #0d5ab9); }
+        .twitter { background: linear-gradient(45deg, #000000, #1DA1F2); }
+        .telegram { background: linear-gradient(45deg, #0088cc, #005f8f); }
+
+        /* Enhanced Email Button */
+        .email-button {
+            background: white;
+            color: #2a2a2a;
+            padding: 1.2rem 2.5rem;
+            border-radius: 3rem;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+            transform-style: preserve-3d;
+        }
+
+        .email-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.8), transparent);
+            transform: translateX(-100%);
+            transition: transform 0.6s;
+        }
+
+        .email-button:hover::before {
+            transform: translateX(100%);
+        }
+
+        .email-button:hover {
+            transform: scale(1.05) translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+
+        /* Animations */
+        @keyframes titleFloat {
+            0%, 100% { transform: translateY(0) rotateX(0) rotateY(0); }
+            50% { transform: translateY(-20px) rotateX(5deg) rotateY(5deg); }
+        }
+
+        @keyframes subtitlePulse {
+            0%, 100% { opacity: 0.8; }
+            50% { opacity: 0.6; }
+        }
+
+        @keyframes floatAndRotate {
+            0% { transform: translateZ(0) rotateX(0) rotateY(0); }
+            100% { transform: translateZ(0) rotateX(360deg) rotateY(360deg); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 968px) {
+            .social-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1.5rem;
+            }
+
+            .title {
+                font-size: 4rem;
+            }
+
+            .subtitle {
+                font-size: 2rem;
+            }
+        }
+
+        @media (max-width: 580px) {
+            .social-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .title {
+                font-size: 3rem;
+            }
+
+            .subtitle {
+                font-size: 1.5rem;
+            }
+
+            .social-link {
+                padding: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 3D Scene -->
+    <div class="scene" id="scene"></div>
+
+    <!-- Main Content -->
+    <div class="content">
+        <div class="title-container">
+            <h1 class="title">JAWONE</h1>
+            <div class="subtitle">contact</div>
+        </div>
+
+        <div class="social-grid">
+            <a href="https://tiktok.com/@yourusername" class="social-link tiktok" target="_blank">
+                <span class="social-icon">🎵</span>
+                <span class="social-text">Follow on TikTok</span>
+            </a>
+            <a href="https://wa.me/09068832528" class="social-link whatsapp" target="_blank">
+                <span class="social-icon">💬</span>
+                <span class="social-text">Message on WhatsApp</span>
+            </a>
+            <a href="https://instagram.com/yourusername" class="social-link instagram" target="_blank">
+                <span class="social-icon">📸</span>
+                <span class="social-text">Follow on Instagram</span>
+            </a>
+            <a href="https://facebook.com/yourusername" class="social-link facebook" target="_blank">
+                <span class="social-icon">👥</span>
+                <span class="social-text">Connect on Facebook</span>
+            </a>
+            <a href="https://twitter.com/yourusername" class="social-link twitter" target="_blank">
+                <span class="social-icon">𝕏</span>
+                <span class="social-text">Follow on Twitter</span>
+            </a>
+            <a href="https://t.me/jawonee" class="social-link telegram" target="_blank">
+                <span class="social-icon">✈️</span>
+                <span class="social-text">Join on Telegram</span>
+            </a>
+        </div>
+
+        <a href="mailto:jawonpro@gmail.com" class="email-button">
+            ✉️ E-mail Me
+        </a>
+    </div>
+
+    <script>
+        // Create floating cubes
+        function createFloatingCubes() {
+            const scene = document.getElementById('scene');
+            const numberOfCubes = 10;
+
+            for (let i = 0; i < numberOfCubes; i++) {
+                const cube = document.createElement('div');
+                cube.className = 'floating-cube';
+                
+                // Create cube faces
+                ['front', 'back', 'right', 'left', 'top', 'bottom'].forEach(face => {
+                    const cubeFace = document.createElement('div');
+                    cubeFace.className = `cube-face ${face}`;
+                    cube.appendChild(cubeFace);
+                });
+
+                // Random position and animation delay
+                cube.style.left = `${Math.random() * 100}vw`;
+                cube.style.top = `${Math.random() * 100}vh`;
+                cube.style.animationDelay = `${Math.random() * 10}s`;
+
+                scene.appendChild(cube);
+            }
+        }
+
+        // Create particles
+        function createParticles() {
+            const scene = document.getElementById('scene');
+            const numberOfParticles = 50;
+
+            for (let i = 0; i < numberOfParticles; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                
+                // Random position
+                particle.style.left = `${Math.random() * 100}vw`;
+                particle.style.top = `${Math.random() * 100}vh`;
+                
+                // Random animation
+                particle.style.animation = `
+                    float ${5 + Math.random() * 10}s linear infinite,
+                    pulse ${1 + Math.random() * 2}s ease-in-out infinite
+                `;
+
+                scene.appendChild(particle);
+            }
+        }
+
+        // Enhanced 3D effect for social links
+        document.querySelectorAll('.social-link').forEach(card => {
+            card.addEventListener('mousemove', e => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                
+                const angleX = (y - centerY) / 15;
+                const angleY = (centerX - x) / 15;
+                
+                card.style.transform = `
+                    perspective(1000px) 
+                    rotateX(${angleX}deg) 
+                    rotateY(${angleY}deg) 
+                    translateZ(20px)
+                `;
+            });
+
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) translateZ(0)';
+            });
+        });
+
+        // Mouse trail effect
+        document.addEventListener('mousemove', e => {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.style.left = e.pageX + 'px';
+            particle.style.top = e.pageY + 'px';
+            document.body.appendChild(particle);
+
+            setTimeout(() => {
+                particle.remove();
+            }, 1000);
+        });
+
+        // Initialize
+        createFloatingCubes();
+        createParticles();
+
+        // Parallax effect for title
+        document.addEventListener('mousemove', e => {
+            const title = document.querySelector('.title');
+            const rect = title.getBoundingClientRect();
+            const x = e.clientX - rect.left - rect.width / 2;
+            const y = e.clientY - rect.top - rect.height / 2;
+            
+            title.style.transform = `
+                perspective(1000px)
+                rotateX(${y * 0.01}deg)
+                rotateY(${x * 0.01}deg)
+                translateZ(50px)
+            `;
+        });
+    </script>
+</body>
+</html>
